@@ -1,0 +1,530 @@
+import java.util.*;
+import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
+import javafx.stage.Stage;
+
+// Product Class
+class Product {
+    int productId;
+    String productName;
+    double price;
+    int quantityInStock;
+
+    // Constructor 
+    public Product(int productId, String productName, double price, int quantityInStock) {
+        this.productId = productId;
+        this.productName = productName;
+        this.price = price;
+        this.quantityInStock = quantityInStock;
+    }
+
+   
+    public int getProductId() {
+        return productId;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public int getQuantityInStock() {
+        return quantityInStock;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public void setQuantityInStock(int quantityInStock) {
+        this.quantityInStock = quantityInStock;
+    }
+
+    @Override
+    public String toString() {
+        return "Product ID: " + productId +
+                "\nProduct Name: " + productName +
+                "\nPrice: $" + price +
+                "\nQuantity in Stock: " + quantityInStock;
+    }
+}
+
+    // Inventory Class
+class Inventory {
+    private List<Product> products;
+
+    public Inventory() {
+        this.products = new ArrayList<>();
+    }
+
+    // Add a new product 
+    public void addProduct(Product product) {
+        products.add(product);
+
+        Collections.sort(products, Comparator.comparingInt(p -> p.productId));
+        System.out.println("Product " + product.productName + " added to the inventory.");
+    }
+
+    // Update stock 
+    public void updateStock(int productId, int quantity) {
+        for (Product product : products) {
+            if (product.productId == productId) {
+                product.quantityInStock += quantity;
+                System.out.println("Stock for product " + product.productName + " updated to " + product.quantityInStock);
+                break;
+            }
+        }
+    }
+
+    // Retrieve product information
+    public Product getProductById(int productId) {
+        for (Product product : products) {
+            if (product.productId == productId) {
+                return product;
+            }
+        }
+        System.out.println("Product with ID " + productId + " not found in the inventory.");
+        return null;
+    }
+
+    public List<Product> getSortedProductList() {
+        
+        List<Product> sortedProducts = new ArrayList<>(products);
+        Collections.sort(sortedProducts, Comparator.comparingInt(p -> p.productId));
+        return sortedProducts;
+    }
+}
+
+
+// Order Class
+class Order {
+    int orderId;
+    String customerName;
+    List<Product> productsOrdered;
+    double totalAmount;
+
+    public Order(int orderId, String customerName) {
+        this.orderId = orderId;
+        this.customerName = customerName;
+        this.productsOrdered = new ArrayList<>();
+        this.totalAmount = 0.0;
+    }
+
+    // Add a product to the order
+    public void addProduct(Product product) {
+        productsOrdered.add(product);
+        calculateTotalAmount();
+        System.out.println("Product " + product.productName + " added to Order #" + orderId);
+    }
+
+    // Calculate the total amount for the order
+    private void calculateTotalAmount() {
+        totalAmount = 0.0;
+        for (Product product : productsOrdered) {
+            totalAmount += product.price;
+        }
+    }
+
+    // Get the total amount for the order
+    public double getTotalAmount() {
+        return totalAmount;
+    }
+
+    // Get a list of products in the order
+    public List<Product> getProductsOrdered() {
+        return productsOrdered;
+    }
+}
+// OrderQueue Class
+class OrderQueue {
+    private Queue<Order> orders;
+
+    public OrderQueue() {
+        this.orders = new LinkedList<>();
+    }
+
+    // Enqueue a new order to the queue
+    public void enqueueOrder(Order order) {
+        orders.add(order);
+        System.out.println("Order #" + order.orderId + " added to the queue.");
+    }
+
+    // Dequeue the next processed order from the queue
+    public Order dequeueOrder() {
+        if (!orders.isEmpty()) {
+            Order processedOrder = orders.poll();
+            System.out.println("Order #" + processedOrder.orderId + " processed and removed from the queue.");
+            return processedOrder;
+        } else {
+            System.out.println("No orders in the queue.");
+            return null;
+        }
+    }
+
+    // Peek at the next order in the queue without removing it
+    public Order peekNextOrder() {
+        if (!orders.isEmpty()) {
+            return orders.peek();
+        } else {
+            System.out.println("No orders in the queue.");
+            return null;
+        }
+    }
+
+    // Get the size of the queue
+    public int getSize() {
+        return orders.size();
+    }
+}
+
+// Admin Interface
+class AdminInterface {
+    Inventory inventory;
+    OrderQueue orderQueue;
+      
+    //constructor
+    public AdminInterface(Inventory inventory, OrderQueue orderQueue) {
+        this.inventory = inventory;
+        this.orderQueue = orderQueue;
+    }
+
+    //adding new products
+    public void addNewProduct(Product product) {
+        inventory.addProduct(product);
+    }
+
+    //updating the stock
+    public void updateStock(int productId, int quantity) {
+        inventory.updateStock(productId, quantity);
+    }
+
+
+    public void viewProductDetails(int productId) {
+        Product product = inventory.getProductById(productId);
+        if (product != null) {
+            System.out.println("Product ID: " + product.productId);
+            System.out.println("Product Name: " + product.productName);
+            System.out.println("Price: $" + product.price);
+            System.out.println("Quantity in Stock: " + product.quantityInStock);
+        } else {
+            System.out.println("Product not found.");
+        }
+    }
+    
+}
+
+// Customer Interface
+public class CustomerInterface {
+
+    private Inventory inventory;
+    private List<Order> orders;
+
+    public CustomerInterface(Inventory inventory) {
+        this.inventory = inventory;
+        this.orders = new ArrayList<>();
+    }
+
+    // Display available products to customers
+    public void displayAvailableProducts() {
+        List<Product> products = inventory.getSortedProductList();
+        System.out.println("Available Products:");
+        for (Product product : products) {
+            System.out.println(product.getProductId() + ". " + product.getProductName() +
+                    " - $" + product.getPrice() + " (Stock: " + product.getQuantityInStock() + ")");
+        }
+    }
+
+    // Add items to the customer's cart
+    public void addToCart(int productId, int quantity) {
+        Product product = inventory.getProductById(productId);
+        if (product != null && product.getQuantityInStock() >= quantity) {
+            Order currentOrder = getCurrentOrder();
+            if (currentOrder == null) {
+                currentOrder = new Order(orders.size() + 1, "Customer");
+                orders.add(currentOrder);
+            }
+            currentOrder.addProduct(product, quantity);
+            System.out.println(quantity + " " + product.getProductName() + "(s) added to your cart.");
+        } else {
+            System.out.println("Invalid product or insufficient stock.");
+        }
+    }
+
+    // Place an order and provide feedback on order status and estimated delivery time
+    public void placeOrder() {
+        Order currentOrder = getCurrentOrder();
+        if (currentOrder != null && !currentOrder.getProductsOrdered().isEmpty()) {
+            double totalAmount = currentOrder.getTotalAmount();
+            System.out.println("Order placed successfully! Your total amount is: $" + totalAmount);
+            System.out.println("Estimated delivery time: 3 days");
+        } else {
+            System.out.println("No items in your cart. Please add items before placing an order.");
+        }
+    }
+
+    // Get the current order for the customer
+    private Order getCurrentOrder() {
+        if (!orders.isEmpty()) {
+            return orders.get(orders.size() - 1);
+        }
+        return null;
+    }
+}
+    
+class Product {
+    private int productId;
+    private String productName;
+    private double price;
+    private int quantityInStock;
+
+    public Product(int productId, String productName, double price, int quantityInStock) {
+        this.productId = productId;
+        this.productName = productName;
+        this.price = price;
+        this.quantityInStock = quantityInStock;
+    }
+
+    public int getProductId() {
+        return productId;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public int getQuantityInStock() {
+        return quantityInStock;
+    }
+}
+
+// Inventory Class
+class Inventory {
+    private List<Product> products;
+
+    public Inventory() {
+        this.products = new ArrayList<>();
+    }
+
+    // Add a new product to the inventory
+    public void addProduct(Product product) {
+        products.add(product);
+        // Maintain the product list in sorted order based on product ID
+        mergeSort(products, Comparator.comparingInt(Product::getProductId));
+    }
+
+    // Merge Sort implementation
+    private <T> void mergeSort(List<T> list, Comparator<? super T> comparator) {
+        if (list.size() > 1) {
+            int mid = list.size() / 2;
+            List<T> left = new ArrayList<>(list.subList(0, mid));
+            List<T> right = new ArrayList<>(list.subList(mid, list.size()));
+
+            mergeSort(left, comparator);
+            mergeSort(right, comparator);
+
+            merge(list, left, right, comparator);
+        }
+    }
+
+    private <T> void merge(List<T> list, List<T> left, List<T> right, Comparator<? super T> comparator) {
+        int i = 0, j = 0, k = 0;
+
+        while (i < left.size() && j < right.size()) {
+            if (comparator.compare(left.get(i), right.get(j)) <= 0) {
+                list.set(k++, left.get(i++));
+            } else {
+                list.set(k++, right.get(j++));
+            }
+        }
+
+        while (i < left.size()) {
+            list.set(k++, left.get(i++));
+        }
+
+        while (j < right.size()) {
+            list.set(k++, right.get(j++));
+        }
+    }
+
+    // Display the sorted product list
+    public void displaySortedProductList() {
+        for (Product product : products) {
+            System.out.println("Product ID: " + product.getProductId() +
+                    ", Product Name: " + product.getProductName() +
+                    ", Price: $" + product.getPrice() +
+                    ", Quantity in Stock: " + product.getQuantityInStock());
+        }
+    }
+}
+//sort
+public class MergeSortProducts{
+    public static void sortProducts(Product[] products, Comparator<Product> comparator) {
+        if (products.length > 1) {
+            int mid = products.length / 2;
+
+            Product[] leftArray = Arrays.copyOfRange(products, 0, mid);
+            Product[] rightArray = Arrays.copyOfRange(products, mid, products.length);
+
+            sortProducts(leftArray, comparator);
+            sortProducts(rightArray, comparator);
+
+            merge(products, leftArray, rightArray, comparator);
+        }
+    }
+}
+    private static void merge(Product[] products, Product[] leftArray, Product[] rightArray, Comparator<Product> comparator) {
+        int i = 0, j = 0, k = 0;
+
+        while (i < leftArray.length && j < rightArray.length) {
+            if (comparator.compare(leftArray[i], rightArray[j]) <= 0) {
+                products[k++] = leftArray[i++];
+            } else {
+                products[k++] = rightArray[j++];
+            }
+        }
+
+        while (i < leftArray.length) {
+            products[k++] = leftArray[i++];
+        }
+
+        while (j < rightArray.length) {
+            products[k++] = rightArray[j++];
+        }
+    }
+
+    // Generate bill for the order
+    public String generateBill() {
+        StringBuilder bill = new StringBuilder();
+        bill.append("Order ID: ").append(orderId).append("\n");
+        bill.append("Customer: ").append(customerName).append("\n");
+        bill.append("Products Ordered:\n");
+
+         for (Product product : productsOrdered) {
+            bill.append("  - ").append(product.getProductName()).append(" (")
+                .append("Price: $").append(product.getPrice()).append(")\n");
+        }
+
+        bill.append("Total Amount: $").append(calculateTotalAmount());
+
+        return bill.toString();
+    }
+
+
+    public void generateLowStockReport() {
+        System.out.println("Low Stock Report:");
+
+         for (Product product : products) {
+            if (product.getQuantityInStock() <= 5) {
+                System.out.println("Product: " + product.getProductName() +
+                        ", Quantity in Stock: " + product.getQuantityInStock());
+            }
+        }
+    }
+
+    // Report generation for sales
+    public void generateSalesReport() {
+        System.out.println("Sales Report:");
+
+        for (Order order : orders) {
+            System.out.println("Order ID: " + order.getOrderId() +
+                    ", Customer: " + order.getCustomerName() +
+                    ", Total Amount: $" + order.calculateTotalAmount());
+        }
+    }
+
+     class OutOfStockException extends Exception {
+        public OutOfStockException(String message) {
+            super(message);
+        }
+    }    
+    
+
+    public void updateStock(int productId, int quantity) throws OutOfStockException {
+        Product product = getProductById(productId);
+
+        if (product != null) {
+            int newStock = product.getQuantityInStock() + quantity;
+
+            if (newStock >= 0) {
+                product.setQuantityInStock(newStock);
+            } else {
+                throw new OutOfStockException("Product " + product.getProductName() + " is out of stock.");
+            }
+        }
+    }    
+    private <T> void mergeSort(List<T> list, Comparator<? super T> comparator) {
+
+    }
+
+
+    class AuthenticationException extends Exception {
+        public AuthenticationException(String message) {
+            super(message);
+        }
+    }
+    public void authenticateAdmin(String username, String password) throws AuthenticationException {
+        if (!adminUsername.equals(username) || !adminPassword.equals(password)) {
+            throw new AuthenticationException("Authentication failed. Invalid username or password.");
+        }
+    }
+    private <T> void mergeSort(List<T> list, Comparator<? super T> comparator) {
+    
+    }
+
+
+// Main class
+public class InventoryManagementSystem {
+    public static void main(String[] args) {
+        Inventory inventory = new Inventory();
+        OrderQueue orderQueue = new OrderQueue();
+        AdminInterface adminInterface = new AdminInterface(inventory, orderQueue);
+        CustomerInterface customerInterface = new CustomerInterface(inventory, orderQueue);
+
+        // Example usage
+        Product product1 = new Product(1, "Laptop", 999.99, 10);
+        Product product2 = new Product(2, "Phone", 499.99, 20);
+
+        adminInterface.addNewProduct(product1);
+        adminInterface.addNewProduct(product2);
+
+        adminInterface.updateStock(1, -2); // Update stock for product with ID 1
+
+        adminInterface.viewProductDetails(1); // View details of product with ID 1
+
+        // Example customer order
+        Order customerOrder = new Order(101, "John Doe");
+        customerOrder.addProduct(product1);
+        customerOrder.addProduct(product2);
+
+        orderQueue.enqueueOrder(customerOrder);
+
+        Order processedOrder = orderQueue.dequeueOrder();
+
+        // Implement the rest of the functionality based on the outlined requirements
+    }
+    // Example usage
+    public static void main(String[] args) {
+        Inventory inventory = new Inventory();
+        CustomerInterface customerInterface = new CustomerInterface(inventory);
+
+        // Display available products
+        customerInterface.displayAvailableProducts();
+
+        // Add items to the cart
+        customerInterface.addToCart(1, 2);
+        customerInterface.addToCart(2, 1);
+
+        // Place an order
+        customerInterface.placeOrder();
+    }
+}
